@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çark Çevir</title>
+    <style>
+        @keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);         
+    }
+}
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #d8d8d8;
+        }
+
+        #wheelCanvas {
+            border-radius: 50%;
+            border: 10px solid #000000;
+            background-color: #9e9c9c;
+            box-shadow: 0 4px 20px 5px rgba(0, 0, 0, 0.5);
+            animation: spin 10s linear infinite;
+        }
+        #platform {
+            width: 150px;
+            height: 30px;
+            background-color: #333;
+            border-radius: 50px 50px 0 0;
+            position: absolute;
+            top: 510px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 
+                        0 0 20px rgba(255, 255, 255, 0.5),
+                        0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        #pointer {
+        width: 0;
+        height: 0;
+        border-left: 25px solid transparent;
+        border-right: 25px solid transparent;
+        border-bottom: 35px solid black;
+        position: absolute;
+        top: 1px;
+        left: 50%;
+        transform: translateX(-50%) rotate(180deg);
+        z-index: 1;
+}
+
+
+#spinButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #000000;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+        #inputArea {
+            margin-top: 20px;
+        }
+
+        #inputArea input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5%;
+        }
+
+        #inputArea button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 15%;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .container {
+            position: relative;
+        }
+        #optionList {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #666666;
+    border-radius: 5px;
+    background-color: rgb(199, 197, 197);
+    width: 400px;
+    margin-top: 10px;
+}
+
+
+#optionList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid #000000;
+}
+
+#optionList li:last-child {
+    border-bottom: none;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="pointer"></div>
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        <button id="spinButton" onclick="spinWheel()">Çevir</button>
+        <div id="platform"></div>
+    </div>
+
+    <div id="inputArea">
+        <input type="text" id="optionInput" placeholder="Seçenek ekle">
+        <button onclick="addOption()">Ekle</button>
+    </div>
+    <ul id="optionList"></ul> 
+    
+    
+
+    <script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const radius = canvas.width / 2;
+        let options = [];
+        let isSpinning = false;
+        const sliceAngle = () => 2 * Math.PI / options.length;
+        let currentRotation = 0;
+        document.getElementById('optionInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            addOption();
+        }
+    });
+    window.onload = function() {
+    const defaultOptions = ['Created', 'by', 'Barkın'];
+    options.push(...defaultOptions);
+    setTimeout(() => {
+        canvas.style.animation = 'spin 10s linear infinite';
+    }, 100);
+    drawWheel();
+};
+
+
+        function drawWheel(){ 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < options.length; i++) {
+                const angle = i * sliceAngle();
+
+                
+                ctx.beginPath();
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius, angle, angle + sliceAngle());
+                ctx.closePath();               
+                ctx.fillStyle = getRandomColor();
+                ctx.fill();
+                ctx.stroke();
+                ctx.save();
+                ctx.translate(radius, radius);
+                ctx.rotate(angle + sliceAngle() / 2);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "white";
+                ctx.font = "bold 20px Arial";
+                ctx.fillText(options[i], radius / 1.5, 10);
+                ctx.restore();
+            }
+        }
+        function stopWheelAnimation() {
+    canvas.style.animation = 'none';
+}
+
+function addOption() {
+    const optionInput = document.getElementById('optionInput');
+    const option = optionInput.value;
+    if (option) {
+        options.push(option);
+        optionInput.value = '';
+        options = options.filter(opt => !['Created', 'by', 'Barkın'].includes(opt));-
+        drawWheel();
+        updateOptionList();
+    }
+}
+
+function updateOptionList() {
+    const optionList = document.getElementById('optionList');
+    optionList.innerHTML = '';
+    options.forEach((option, index) => {
+        
+        if (!['Created', 'by', 'Barkın'].includes(option)) {
+            const listItem = document.createElement('li');
+            listItem.textContent = option;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Sil';
+            deleteButton.onclick = () => removeOption(index); 
+            deleteButton.style.borderRadius = '5px';
+            deleteButton.style.marginLeft = '10px';
+            deleteButton.style.backgroundColor = '#ff4d4d';
+            deleteButton.style.color = 'white';
+            deleteButton.style.border = 'none';
+            deleteButton.style.cursor = 'pointer';
+            deleteButton.style.padding = '5px 10px';
+
+            listItem.appendChild(deleteButton);
+            optionList.appendChild(listItem);
+        }
+    });
+}
+
+function removeOption(index) {
+    options.splice(index, 1);
+    drawWheel();
+    updateOptionList();
+}
+
+function spinWheel() {
+    if (isSpinning) return;
+    canvas.style.animation ='none';
+    drawWheel();
+     
+
+    const randomRotation = Math.floor(Math.random() * 360) + 360 * 4;
+    currentRotation += randomRotation;
+
+    const wheelCanvas = document.getElementById('wheelCanvas');
+    wheelCanvas.style.transition = "transform 4s ease-out";
+    wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+
+    
+    setTimeout(() => {
+        const selectedOption = getSelectedOption(currentRotation);
+        isSpinning = false;
+        showResult(selectedOption);
+    }, 4500);
+    setTimeout(() => {
+        canvas.style.animation = 'spin 10s linear infinite';
+    }, 6000);
+}
+function getSelectedOption(rotation) {
+    const normalizedRotation = (rotation % 360);
+    const sliceAngleDeg = 360 / options.length;
+
+    
+    const pointerOffset = 90;
+    const correctedRotation = (360 - (normalizedRotation + pointerOffset) % 360);
+
+    
+    const selectedIndex = Math.floor(correctedRotation / sliceAngleDeg);
+
+    return options[selectedIndex];
+}
+function showResult(option) {
+    
+    if (document.getElementById('resultBox')) {
+        return;
+    }
+
+    
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    overlay.style.zIndex = '2';
+    overlay.id = 'overlay';
+    document.body.appendChild(overlay);
+
+    
+    const resultBox = document.createElement('div');
+    resultBox.textContent = `Seçilen: ${option}`;
+    resultBox.style.position = 'fixed';
+    resultBox.style.top = '50%';
+    resultBox.style.left = '50%';
+    resultBox.style.transform = 'translate(-50%, -50%)';
+    resultBox.style.padding = '20px';
+    resultBox.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    resultBox.style.color = 'white';
+    resultBox.style.borderRadius = '5px';
+    resultBox.style.zIndex = '3';
+    resultBox.style.minWidth = '200px';
+    resultBox.style.maxWidth = '80%';
+    resultBox.style.wordWrap = 'break-word';
+    resultBox.id = 'resultBox';
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Kapat';
+    closeButton.style.position = 'absolute'; 
+    closeButton.style.top = '15px'; 
+    closeButton.style.right = '10px';
+    closeButton.style.padding = '5px 10px';
+    closeButton.style.backgroundColor = '#ff4d4d';
+    closeButton.style.color = 'white';
+    closeButton.style.border = 'none';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.borderRadius = '5px';
+    closeButton.onclick = () => {
+        resultBox.remove();
+        overlay.remove();
+    };
+
+    resultBox.appendChild(closeButton);
+    document.body.appendChild(resultBox);
+}
+
+
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        drawWheel();
+    </script>
+
+</body>
+</html>
